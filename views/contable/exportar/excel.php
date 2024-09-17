@@ -1,0 +1,270 @@
+<style>
+    .text-center {
+        text-align: center;
+    }
+
+    .font-weight {
+        font-weight: bold;
+    }
+</style>
+
+<?php
+    $col_span = 27;
+    // DATOS DE EMPRESA
+    $Empresa = $this->Empresa;
+?>
+<table id="bootstrap-table" border='1'>
+    <tr>
+        <td colspan="<?php print $col_span; ?>"><?php print(utf8_decode($this->Empresa['razon_social'])); ?> - <?php print(utf8_decode($this->Empresa['nombre_comercial'])); ?> - <?php print(utf8_decode($this->Empresa['ruc'])); ?></td>
+    </tr>
+    <!-- <tr>
+        <td colspan="<?php print $col_span; ?>"><?php print(utf8_decode($this->Empresa['ruc'])); ?></td>
+    </tr> -->
+    <tr>
+        <td colspan="<?php print $col_span; ?>" class="text-center font-weight">FORMATO 14.1 : "REGISTRO DE VENTAS E INGRESOS DEL PERIODO <?php print(utf8_decode($this->periodo)); ?>"
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            NUMERO CORRELATIVO DEL REGISTRO O CUO.
+        </td>
+        <td>
+            FECHA DE EMISION DEL COMPROBANTE DE PAGO O EMISION DEL DOCUMENTO
+        </td>
+        <td>
+            FECHA VENC.
+        </td>
+        <td colspan="3">
+            COMPROBANTE DE PAGO
+        </td>
+        <td colspan="3">
+            INFORMACON DE CLIENTE
+        </td>
+        <td>
+            VALOR<br/>FACTURADO<br/>EXPORTACION
+        </td>
+        <td>
+            BASE<br/>IMPONIBLE<br/>GRAVADA
+        </td>
+        <td colspan="2">
+            IMPORTE TOTAL
+        </td>
+        <td>
+            ISC
+        </td>
+        <td>RC</td>
+        <td>
+            IGV Y/O<br/>IMP.
+        </td>
+        <td>
+            OTROS<br/>TRIBUTOS
+        </td>
+        <td>
+            IMPORTE TOTAL
+        </td>
+        <td>
+            TIPO DE<br/>CAMBIO
+        </td>
+        <td>
+            MONEDA
+        </td>
+        <td colspan="4">
+            REFERENCIA DEL COMPROBANTE O<br/>
+            DOC. ORIGINAL QUE SE MODIFICA
+        </td>
+        <td colspan="2"></td>
+    </tr>
+    <tr>
+        <td colspan="2"></td>
+        <td></td>
+        <td></td>
+        <td>TIPO</td>
+        <td>SERIE</td>
+        <td>NUMERO</td>
+        <td>TIPO</td>
+        <td>R.U.C.</td>
+        <td>APELLIDOS Y NOMBRES</td>
+        <td></td>
+        <td></td>
+        <td>EXONERADA</td>
+        <td>INAFECTA</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td>FECHA</td>
+        <td>TIPO</td>
+        <td>SERIE</td>
+        <td>Nro.COMP.</td>
+        <?php if ($_POST["formapago"]=='on') { ?>
+            <td>FORMA PAGO</td>
+        <?php } ?>
+        <?php if ($_POST["estadocpe"]=='on') { ?>
+            <td>ESTADO</td>
+        <?php } ?>
+    </tr>
+    <?php
+        $loop = 1;
+        // print_r($this->dato);
+        $totalfinalExonerado = '0';
+        $totalfinalGravada = '0';
+        $totalfinalIGV = '0';
+        $totalfinalImporte = '0';
+        foreach($this->dato as $id => $row) {
+            // var_dump($row->enviado_sunat);
+            // var_dump($row->estado);
+
+    ?>
+     <tr>
+            <?php
+            
+            $date_of_issue = date('d-m-Y',strtotime($row->fec_ven));
+            $tipo = array('BOLETA DE VENTA'=>"03","FACTURA" =>'01');
+            $document_type_id = $tipo[$row->desc_td];
+            
+            
+            $total_ope_gravadas = 0;
+            $total_igv_gravadas = 0;
+            $total_ope_exoneradas = 0;
+            $total_igv_exoneradas = 0;
+            $total_rc = 0;
+
+            $comision_delivery = $row->comis_del;
+            $descuento = $row->desc_monto;
+
+            $total_rc += $row->rc_total;
+            
+            foreach($row->Detalle as $d){
+                if($d->codigo_afectacion == '10'){
+                    $total_ope_gravadas = $total_ope_gravadas + $d->valor_venta;
+                    $total_igv_gravadas = $total_igv_gravadas + $d->total_igv;
+                    $total_ope_exoneradas = $total_ope_exoneradas + 0;
+                    $total_igv_exoneradas = $total_igv_exoneradas + 0;
+                } else{
+                    $total_ope_gravadas = $total_ope_gravadas + 0;
+                    $total_igv_gravadas = $total_igv_gravadas + 0;
+                    $total_ope_exoneradas = $total_ope_exoneradas + $d->valor_venta;
+                    $total_igv_exoneradas = $total_igv_exoneradas + $d->total_igv;
+                }
+            }
+
+            $series = $row->ser_doc;
+            $number = $row->nro_doc;
+
+            if($row->Cliente->tipo_cliente == '2'){
+                $customer_identity_document_type_id = '6';
+                $customer_number = $row->Cliente->ruc;
+            }else{
+                $customer_identity_document_type_id = $row->Cliente->tipo_cliente;
+                $customer_number = $row->Cliente->dni;
+            }
+            $customer_name = $row->Cliente->nombre;
+            $exchange_rate_sale = '';
+            $currency_type_symbol = 'S/';
+
+
+            if ($row->estado == 'i') : 
+                $total_exportation = '0';
+                $total_taxed = '0';
+                $total_exonerated = '0';
+                $total_unaffected = '0';
+                $total_plastic_bag_taxes = '0';
+                $total_igv = '0';
+                $total = '0';
+            else : 
+                $total_exportation = '0';
+                $total_taxed = $total_ope_gravadas - number_format((($descuento/igv_dec2)), 2, ".", "");
+                $total_exonerated = ($total_ope_exoneradas > 0 )? ($total_ope_exoneradas + $comision_delivery) : '0';
+                $total_unaffected = '0';
+                $total_plastic_bag_taxes = '0';    
+                $total_igv = $total_igv_gravadas - number_format(($descuento -($descuento/igv_dec2)), 2, ".", "");
+                $total = ($total_ope_exoneradas > 0 )? $total_taxed + $total_igv + $total_exonerated + $total_rc : $total_taxed + $total_igv + $total_exonerated + $comision_delivery + $total_rc; // temporal 
+                // $total = $row->total;
+            endif; 
+
+            $totalfinalExonerado += $total_exonerated;
+            $totalfinalGravada += $total_taxed;
+            $totalfinalIGV += $total_igv;
+            $totalfinalImporte += $total;
+                // $total_exportation = '0';
+                // $total_taxed = number_format($row->total / igv_dec2, 2);
+                // $total_exonerated = '0';
+                // $total_unaffected = '0';
+                // $total_plastic_bag_taxes = '0';
+                // $total_igv = number_format($total_taxed * 0.18, 2);
+                // $total = $row->total;
+            //     $total_isc = $row['total_isc'];
+            //     $ok = 1;
+
+            // }
+            ?>
+            <td>06</td>
+            <td><?php print $loop++; ?></td>
+            <td><?php print $date_of_issue ; ?></td>
+            <td></td>
+            <td><?php print $document_type_id ; ?></td>
+            <td><?php print $series ; ?></td>
+            <td><?php print $number ; ?></td>
+            <td><?php print $customer_identity_document_type_id ; ?></td>
+            <td><?php print $customer_number ; ?></td>
+            <td><?php print $customer_name ; ?></td>
+
+            <td><?php print $total_exportation ; ?></td>
+
+            <td><?php print $total_taxed ; ?></td>
+            <td><?php print $total_exonerated ; ?></td>
+            <td><?php print $total_unaffected  ; ?></td>
+            <!--  print-- Aqui deberia ir $total_isc --;-->
+            <td><?php print $total_plastic_bag_taxes ; ?> </td>
+            <td><?php print $total_rc ; ?> </td>
+            <td><?php print $total_igv ; ?></td>
+            <td></td>
+            <td><?php print $total ; ?></td>
+
+            <td><?php print $exchange_rate_sale ; ?></td>
+            <td><?php print $currency_type_symbol ; ?></td>
+
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+
+            <?php if ($_POST["formapago"]=='on') { ?>
+                <!-- forma de pago -->
+                <td><?=$row->desc_tp?></td>
+            <?php } ?>
+            <?php if ($_POST["estadocpe"]=='on') { ?>
+                <!-- estado -->
+                <td>
+                    <?php
+                        $estado = '';
+                        if ($row->estado == 'i') {
+                            $estado = 'ANULADO';
+                        }else if ( $row->enviado_sunat != '1' && $row->estado == 'a') {
+                            $estado = 'SIN ENVIAR';
+                        }else if ( $row->enviado_sunat == '1' && $row->estado == 'a') {
+                            $estado = 'ACEPTADO';
+                        }
+                        echo $estado;
+                    ?>
+                    
+                </td>
+            <?php } ?>
+
+        </tr>
+    <?php }?>
+    <tr>
+        <td colspan="10"></td>
+        <td>TOTALES</td>
+        <td><?=$totalfinalGravada?></td>
+        <td><?=$totalfinalExonerado?></td>
+        <td colspan="3"></td>
+        <td><?=$totalfinalIGV?></td>
+        <td></td>
+        <td><?=$totalfinalImporte?></td>
+        <td colspan="8"></td>
+    </tr>
+</table>

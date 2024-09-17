@@ -1,0 +1,6 @@
+[27-Aug-2024 19:54:28 UTC] PHP Warning:  require(config.php): Failed to open stream: No such file or directory in /home/schhrgyh/rest.artindev.net/index.php on line 3
+[27-Aug-2024 19:54:28 UTC] PHP Warning:  require(config.php): Failed to open stream: No such file or directory in /home/schhrgyh/rest.artindev.net/index.php on line 3
+[27-Aug-2024 19:54:28 UTC] PHP Fatal error:  Uncaught Error: Failed opening required 'config.php' (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home/schhrgyh/rest.artindev.net/index.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/schhrgyh/rest.artindev.net/index.php on line 3
